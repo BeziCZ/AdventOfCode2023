@@ -7,83 +7,108 @@ import (
 	"io/ioutil"
 	"strings"
 	"strconv"
-	"unicode"
+	//"unicode"
+	"regexp"
 )
-
-func isInt(s string) bool {
-    for _, c := range s {
-        if !unicode.IsDigit(c) {
-            return false
-        }
-    }
-    return true
+type nearbyNumber struct{
+	lineNum int
+	sIdx int
+	eIdx int 
+	counted bool
+	value int
 }
 
-func checkLines(lines []string, idx int) int {
-	var lineSum int = 0
-	for _, line := range lines {
-		if line[idx] >= '0' && line[idx] <= '9'{
-			var bStr string = ""
-			var aStr string = ""
-			for j := -2; j < 0; j++{
-				if line[idx+j] == '.' && aStr != "" {
-					bStr = ""
-					break
-				} else{
-					bStr += string(line[idx+j])
-				}
-			}
-			for k := 0; k < 3; k++ {
-				if line[idx+k] == '.'{
-					break
-				}
-				aStr += string(line[idx+k])
-			}
-			bStr = strings.TrimLeft(bStr,".")
-			var str string = ""
-			if isInt(bStr){
-				str = bStr + aStr
-			} else{
-				str = aStr
-			}
-			num, _ := strconv.Atoi(str)
-			lineSum += num
-		} else if line[idx-1] >= '0' && line[idx-1] <= '9'{
-			str := line[idx-3:idx]
-			str = strings.Trim(str, ".")
-			num, _ := strconv.Atoi(str)
-			lineSum += num
-		} else if line[idx+1]>= '0' && line[idx+1] <= '9'{
-			str := line[idx+1:idx+4]
-			str = strings.Trim(str, ".")
-			num, _ := strconv.Atoi(str)
-			lineSum += num
-		}
-	}
-	return lineSum
-}
-func main() {
-	fmt.Println("Opening file...")
-	file, err := os.Open("./input")
+func readFile(filename string) []string{
+	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
-
 	raw, err := ioutil.ReadAll(file)
 	if err != nil {
 		panic(err)
 	}
 	lines := strings.Split(string(raw), "\n")
-	var totalSum int = 0
-	for i := 1; i < len(lines)-2; i++ {
-		fmt.Println(lines[i])
-		for idx, c := range lines[i]{
-			if !(c > '0' && c <= '9') && c != '.'{
-				totalSum += checkLines(lines[i-1:i+2],idx)
+	return lines
+}
+
+func getNumbers(lines []string) []nearbyNumber{
+	extractedNumbers := make([]nearbyNumber, 0)
+	for idx, line := range lines{
+		re := regexp.MustCompile("[0-9]+")
+		numIdxs := re.FindAllStringIndex(line, -1)
+		for _, numIdx := range numIdxs{
+			startIdx := numIdx[0]
+			endIdx := numIdx[1]
+			val, err := strconv.Atoi(line[numIdx[0]:numIdx[1]])
+			if err != nil{
+				log.Fatal(err)
+			}
+			number := nearbyNumber{
+				lineNum: idx,
+				sIdx: startIdx,
+				eIdx: endIdx,
+				value: val,
+				counted: false,
+			}
+			extractedNumbers = append(extractedNumbers, number)
+		}
+	}
+	return extractedNumbers
+}
+
+func getNeighbours(lineIdx int, idx int, c rune, numbers []nearbyNumber) ([]nearbyNumber, int) {
+	neighbours := make([]nearbyNumber,0)
+	for j, num := range numbers{
+		if num.lineNum >= lineIdx-1 && num.lineNum <= lineIdx+1{
+			if (num.sIdx >= idx -1 && num.sIdx <= idx + 1)||(num.eIdx-1 >= idx-1 && num.eIdx-1 <= idx+1){
+				neighbours = append(neighbours, num)
+				numbers[j].counted = true
 			}
 		}
-		
+	}
+	return neighbours, len(neighbours)
+}
+
+func getNeighbourValue(lineIdx int, idx int, c rune, numbers []nearbyNumber) int{
+	var localSum = 0
+	for j, num := range numbers{
+		if num.lineNum >= lineIdx-1 && num.lineNum <= lineIdx+1{
+			if (num.sIdx >= idx -1 && num.sIdx <= idx + 1)||(num.eIdx-1 >= idx-1 && num.eIdx-1 <= idx+1){
+				if !num.counted {
+					localSum += num.value
+					numbers[j].counted = true
+				} 
+			}
+		}
+	}
+	return localSum
+}
+func main() {
+	// Part 1
+	lines := readFile("./input")
+	var totalSum int = 0
+	var totalRatio int = 0
+	numbers := getNumbers(lines)
+
+	for i := 1; i < len(lines)-1; i++{
+		fmt.Println(lines[i])
+		for idx, c := range lines[i]{
+			if !(c >= '0' && c <= '9') && c != '.'{
+				if c == '*'{
+					neig, num := getNeighbours(i, idx, c, numbers)
+					if num == 2{
+						totalRatio += (neig[0].value * neig[1].value)
+						totalSum += neig[0].value + neig[1].value
+					} else{
+						totalSum += neig[0].value
+					}
+				} else{
+					totalSum += getNeighbourValue(i, idx, c, numbers)
+				}
+			}
+		}
 	}
 	fmt.Println(totalSum)
+	fmt.Println(totalRatio)
 }
