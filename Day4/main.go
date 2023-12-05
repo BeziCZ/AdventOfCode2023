@@ -11,6 +11,19 @@ import (
 	"strconv"
 )
 
+func readFile(filename string) []string{
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	raw, err := ioutil.ReadAll(file)
+	if err != nil {
+		panic(err)
+	}
+	lines := strings.Split(string(raw), "\n")
+	return lines
+}
 func getCardPoints(line string) int{
 	numbers := strings.Split(line, "|")
 	re := regexp.MustCompile("[0-9]+")
@@ -45,18 +58,7 @@ func getNumberOfNextCards(line string) (int, int){
 	return id, numOfNext
 }
 func main() {
-	// File opening
-	fmt.Println("Opening file...")
-	file, err := os.Open("./input")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-	raw, err := ioutil.ReadAll(file)
-	if err != nil {
-		panic(err)
-	}
-	lines := strings.Split(string(raw), "\n")
+	lines := readFile("./input")
 	//Part 1
 	var totalValue int = 0
 	for _, line := range lines{
