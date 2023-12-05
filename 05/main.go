@@ -5,6 +5,8 @@ import (
 	"os"
 	"bufio"
 	"log"
+	"strings"
+	"strconv"
 )
 
 func readFile(filename string) []string{
@@ -21,8 +23,20 @@ func readFile(filename string) []string{
 	return lines
 }
 
+func parseLines()
+func getWantedSeeds(line string) []int{
+	seeds := make([]int,0)
+	seedNums := strings.Split(strings.Trim(strings.Split(line, ":")[1]," "), " ")
+	for _, seed := range seedNums {
+		num, _ := strconv.Atoi(seed)
+		seeds = append(seeds, num)
+	}
+	return seeds
+}
 func main() {
 	lines := readFile("testinput")
+	wantedSeeds := getWantedSeeds(lines[0])
+	fmt.Println(wantedSeeds)
+	var seed2soil map[int]int
 
-	fmt.Println(lines)
 }
