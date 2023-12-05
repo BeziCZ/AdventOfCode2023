@@ -3,13 +3,12 @@ package main
 import (
 	"fmt"
 	"os"
-	//"bufio"
 	"strings"
 	"log"
 	"slices"
-	//"io"
 	"regexp"
 	"io/ioutil"
+	"strconv"
 )
 
 func getCardPoints(line string) int{
@@ -20,9 +19,8 @@ func getCardPoints(line string) int{
 	var worth int = 0 
 	for _, win := range random{
 		if slices.Contains(winning,win){ 
-			
 			if worth == 0{
-				worth++
+				worth = 1
 			} else {
 				worth *= 2
 			}
@@ -31,9 +29,11 @@ func getCardPoints(line string) int{
 	return worth
 }
 
-func getNumberOfNextCards(line string) int{
-	numbers := strings.Split(line, "|")
+func getNumberOfNextCards(line string) (int, int){
+	game := strings.Split(line, ":")
+	numbers := strings.Split(game[1], "|")
 	re := regexp.MustCompile("[0-9]+")
+	id, _ := strconv.Atoi(re.FindAllString(game[0],-1)[0])
 	winning := re.FindAllString(numbers[0],-1)
 	random := re.FindAllString(numbers[1],-1)
 	var numOfNext int = 0 
@@ -42,55 +42,49 @@ func getNumberOfNextCards(line string) int{
 			numOfNext++
 		}
 	}
-	return numOfNext
+	return id, numOfNext
 }
 func main() {
-	
+	// File opening
 	fmt.Println("Opening file...")
 	file, err := os.Open("./input")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
-	/* Used for part 1
-	reader := bufio.NewReader(file)
-	var totalValue int = 0
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil{
-			if err == io.EOF {
-
-				break
-			} else {
-				log.Fatal(err)
-			}
-		}
-		split_line := strings.Split(line,":")
-		totalValue += getCardPoints(split_line[1])
-	}
-	fmt.Println(totalValue)
-	*/ 
 	raw, err := ioutil.ReadAll(file)
 	if err != nil {
 		panic(err)
 	}
 	lines := strings.Split(string(raw), "\n")
-	numsOfCards := make([]int,198,198)
-	for i := 0; i < len(numsOfCards); i++ {
-		numsOfCards[i]++
-	}
-	fmt.Println(len(numsOfCards))
-	fmt.Println(len(lines))
-	for idx, line := range lines{
+	//Part 1
+	var totalValue int = 0
+	for _, line := range lines{
+		if line != "" {
 		split_line := strings.Split(line,":")
-		for i := 0; i < numsOfCards[idx]; i++{
-			numOfNext := getNumberOfNextCards(split_line[1])
-			for i := 1; i <= numOfNext; i++ {
-				numsOfCards[idx+i]++ 
+		totalValue += getCardPoints(split_line[1])
+		}
+	}
+	fmt.Println(totalValue) 
+	// Part 2
+	numsOfCards := map[int]int{1:1}
+	for _, line := range lines{
+		if line != ""{
+			id, numOfNext := getNumberOfNextCards(line)
+			if  _, good := numsOfCards[id]; !good{
+				numsOfCards[id] = 1
+			}
+			if numOfNext == 0{
+				continue
+			}
+			for i := id+1; i <= id+numOfNext; i++ {
+				if  _, good := numsOfCards[i]; !good{
+					numsOfCards[i] = 1
+				}
+				numsOfCards[i] += numsOfCards[id]
 			}
 		}
 	}
-	fmt.Println(numsOfCards)
 	var totalNumberOfCards int = 0
 	for _, n := range numsOfCards{
 		totalNumberOfCards += n
