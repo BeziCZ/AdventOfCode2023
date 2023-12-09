@@ -59,7 +59,6 @@ func getPrevValue(line []int) int{
 	allZero := true
 	prevVals := make([]int, 0)
 	for {
-		fmt.Println(currVals)
 		for i:=len(currVals)-1; i>0; i--{
 			pVal := currVals[i]-currVals[i-1]
 			if pVal != 0 {
@@ -85,7 +84,7 @@ func getPrevValue(line []int) int{
 }
 
 func main() {
-	lines := readFile("cauchytest")
+	lines := readFile("input")
 	nextValueSum := 0
 	prevValueSum := 0
 	for _, line := range lines{
