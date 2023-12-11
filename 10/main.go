@@ -6,7 +6,6 @@ import (
 	"log"
 	"io/ioutil"
 	"strings"
-	//"math"
 )
 
 var (
@@ -19,6 +18,7 @@ type Pipe struct {
 	next int
 	Y int
 	X int
+	
 }
 
 func readFile(filename string) []string{
@@ -363,8 +363,12 @@ func getNextL(lines []string, X int, Y int, curr Pipe) (string, rune){
 	}
 	return "", ' '
 }
+
+func floodFill(node string){
+
+}
 func main() {
-	lines := readFile("input")
+	lines := readFile("testinput")
 	lIdx, idx := getStart(lines)
 
 	start := Pipe{id:0, pType:'S', prev:-1, next:-1, Y:lIdx, X:idx}
@@ -397,5 +401,23 @@ func main() {
 		}
 		lastIdx++
 	}
+
 	fmt.Println(len(loop)/2)
+	// Visualization. Useless but cute. 
+	charMatrix := make([][]string, 0)
+	for _, line := range lines {
+		repLine := strings.ReplaceAll(line, ".", "O")
+		repLine = strings.ReplaceAll(repLine, "F", "┌")
+		repLine = strings.ReplaceAll(repLine, "7", "┐")
+		repLine = strings.ReplaceAll(repLine, "J", "┘")
+		repLine = strings.ReplaceAll(repLine, "L", "└")
+		repLine = strings.ReplaceAll(repLine, "-", "─")
+		repLine = strings.ReplaceAll(repLine, "|", "│")
+		split := strings.Split(repLine, "")
+		charMatrix = append(charMatrix, split)
+	}
+
+	for _, line := range charMatrix {
+		fmt.Println(line)
+	}
 }
